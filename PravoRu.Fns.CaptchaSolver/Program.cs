@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Security.Policy;
 
 namespace PravoRu.Fns.CaptchaSolver
@@ -36,7 +37,17 @@ namespace PravoRu.Fns.CaptchaSolver
 				Test(path, pathDirectory);
 			}
 		}
-		
+
+		private static void DownloadCaptchas()
+		{
+			var seconds = (DateTime.UtcNow - DateTime.MinValue).TotalSeconds;
+			var token = new WebClient().DownloadString(
+				$"https://service.nalog.ru/static/captcha.bin?{seconds}");
+			var bytes = new WebClient().DownloadData($"https://service.nalog.ru/static/captcha.bin?r={seconds}&a={token}&version=3");
+			var image = Bitmap.FromStream(new MemoryStream(bytes));
+			image.Save($"..\\..\\Samples\\downloads\\{seconds}.bmp");
+		}
+
 		private static void Test(string path, string pathDirectory)
 		{
 			Bitmap b = new Bitmap(path);
@@ -47,7 +58,6 @@ namespace PravoRu.Fns.CaptchaSolver
 			
 			SaveBySquare(b, pathDirectory);
 		}
-
 
 		private static void SetBlackWhiteBitmap(Bitmap b)
 		{
@@ -87,7 +97,7 @@ namespace PravoRu.Fns.CaptchaSolver
 			var j = 0;
 			foreach (var bitmap in bitmaps)
 			{
-				bitmap.Save(pathDirectory+$@"\{++j}cutted.bmp");
+				bitmap.Save(pathDirectory+$@"\{Guid.NewGuid()}.bmp");
 			}
 			
 		}
