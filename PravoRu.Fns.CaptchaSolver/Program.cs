@@ -8,10 +8,12 @@ using System.Security.Policy;
 
 namespace PravoRu.Fns.CaptchaSolver
 {
-	internal class Program
+	public class Program
 	{
 		public static void Main(string[] args)
 		{
+			ResizeDataSet();
+			
 			if (Directory.Exists("Samples"))
 			{
 				Directory.Delete("Samples", true);
@@ -32,8 +34,6 @@ namespace PravoRu.Fns.CaptchaSolver
 					Directory.Delete(pathDirectory, true);
 				}
 				Directory.CreateDirectory(pathDirectory);
-				Directory.CreateDirectory(pathDirectory+@"\bywidth");
-				Directory.CreateDirectory(pathDirectory+@"\bysquare");
 				Test(path, pathDirectory);
 			}
 		}
@@ -45,18 +45,39 @@ namespace PravoRu.Fns.CaptchaSolver
 				$"https://service.nalog.ru/static/captcha.bin?{seconds}");
 			var bytes = new WebClient().DownloadData($"https://service.nalog.ru/static/captcha.bin?r={seconds}&a={token}&version=3");
 			var image = Bitmap.FromStream(new MemoryStream(bytes));
-			image.Save($"..\\..\\Samples\\downloads\\{seconds}.bmp");
+			image.Save($"..\\..\\Samples\\{seconds}.bmp");
 		}
 
 		private static void Test(string path, string pathDirectory)
 		{
 			Bitmap b = new Bitmap(path);
 
-			b.Save(pathDirectory+@"\bysquare\original.bmp");
+			b.Save(pathDirectory+@"\original.bmp");
 			
 			SetBlackWhiteBitmap(b);
 			
 			SaveBySquare(b, pathDirectory);
+		}
+		
+		public static void Run(Bitmap b, string pathDirectory)
+		{
+			SetBlackWhiteBitmap(b);
+			SaveBySquare(b, pathDirectory);
+		}
+		
+		private static void ResizeDataSet()
+		{
+			foreach (var file in Directory.GetFiles(@"C:\Users\1\Desktop\DataSet\full"))
+			{
+				Bitmap b = new Bitmap(file);
+				
+				var resizedBitmap = Resize(b);
+				
+				SetBlackWhiteBitmap(resizedBitmap);
+				b.Dispose();
+				File.Delete(file);
+				resizedBitmap.Save(file);
+			}
 		}
 
 		private static void SetBlackWhiteBitmap(Bitmap b)
@@ -78,28 +99,58 @@ namespace PravoRu.Fns.CaptchaSolver
 			}
 		}
 		
-		private static void SaveBySquare(Bitmap cutedBitmap, string pathDirectory)
+		public static void SaveBySquare(Bitmap cutedBitmap, string pathDirectory)
 		{
-			pathDirectory += @"\bysquare";
 			var bitmaps = GetBitmapsBySquare(cutedBitmap);
 			for (int i = 0; i < 3; i++)
 			{
+				var resultBitmaps = new List<Bitmap>(6);
 				if (bitmaps.Count < 6)
 				{
-					var bs = bitmaps.Where(x => x.Width > 35).ToList();
-					bitmaps = bitmaps.Where(x => x.Width < 35).ToList();
-					foreach (var bitmap in bs)
+					foreach (var bitmap in bitmaps)
 					{
-						bitmaps.AddRange(GetBitmapsBySquare(bitmap));
+						if (bitmap.Width > 35)
+						{
+							var resized = GetBitmapsBySquare(bitmap);
+							foreach (var bitmap1 in resized)
+							{
+								resultBitmaps.Add(bitmap1);
+							}
+						}
+						else
+						{
+							resultBitmaps.Add(bitmap);
+						}
 					}
+
+					bitmaps = resultBitmaps;
 				}
 			}
 			var j = 0;
 			foreach (var bitmap in bitmaps)
 			{
-				bitmap.Save(pathDirectory+$@"\{Guid.NewGuid()}.bmp");
+				Resize(bitmap).Save(pathDirectory+$@"\{++j}.bmp");
 			}
 			
+		}
+		
+		private static Bitmap Resize (Bitmap original)
+		{
+			Graphics g = null;
+			Bitmap b = null;
+			try {
+				b = new Bitmap(25,40);
+				g = Graphics.FromImage(b);
+				g.Clear(Color.Transparent);
+				g.DrawImage(original, 0, 0, 25, 40);
+			}
+			finally {
+				if (g != null) {
+					g.Dispose();
+				}
+			}
+
+			return b;
 		}
 
 		private static List<Bitmap> GetBitmapsBySquare(Bitmap cutedBitmap)
