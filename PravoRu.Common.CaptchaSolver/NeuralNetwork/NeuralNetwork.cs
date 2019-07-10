@@ -3,18 +3,20 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
+using PravoRu.Common.CaptchaSolver.Interfaces;
+using PravoRu.Common.CaptchaSolver.Models;
 
 namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 {
 	/// <summary>
 	/// Класс нейронной сети
 	/// </summary>
-	public class NeuralNetwork
+	public class NeuralNetwork : INeuralNetwork
 	{
 		/// <summary>
 		/// Топология сети
 		/// </summary>
-		private ITopology _topology;
+		public ITopology Topology;
 		
 		/// <summary>
 		/// Слои нейронной сети
@@ -32,8 +34,13 @@ namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 		/// .ctor
 		/// </summary>
 		/// <param name="topology">Топология сети</param>
-		public NeuralNetwork(ITopology topology) : this(topology.LayerCount, topology.NeuronsCountByLayer)
+		public NeuralNetwork(ITopology topology)
 		{
+			Topology = topology ?? throw new ArgumentNullException(nameof(topology));
+			if (Topology.LayerCount > 1 && Topology.NeuronsCountByLayer.Length > 1)
+			{
+				InitNeuralNetwork(topology.LayerCount, topology.NeuronsCountByLayer);
+			}
 		}
 
 		/// <summary>
@@ -42,7 +49,7 @@ namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 		/// <param name="layerCount">Количество слоев сети</param>
 		/// <param name="neuronLayerCount">Количество нейронов в каждом слое</param>
 		/// <exception cref="ArgumentException"></exception>
-		private NeuralNetwork(int layerCount, params int[] neuronLayerCount)
+		private void InitNeuralNetwork(int layerCount, params int[] neuronLayerCount)
 		{
 			if (layerCount < 2)
 			{
@@ -67,11 +74,11 @@ namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 		/// <exception cref="ArgumentNullException">Вызывается когда топология или путь к файлу конфигурации не указан</exception>
 		public void InitializeFromConfig()
 		{
-			if (_topology == null || String.IsNullOrWhiteSpace(_topology.PathToConfigFile))
+			if (Topology == null || String.IsNullOrWhiteSpace(Topology.PathToConfigFile))
 			{
-				throw new ArgumentNullException(nameof(_topology.PathToConfigFile));
+				throw new ArgumentNullException(nameof(Topology.PathToConfigFile));
 			}
-			InitializeFromConfig(File.ReadAllText(_topology.PathToConfigFile));
+			InitializeFromConfig(File.ReadAllText(Topology.PathToConfigFile));
 		}
 
 		/// <summary>
@@ -157,38 +164,17 @@ namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 		/// <summary>
 		/// Метод вычисления результата
 		/// </summary>
-		/// <param name="inputs">Входящие сигналы</param>
+		/// <param name="bitmap">Нормализованное изображение</param>
 		/// <returns>Цифра, которую удалось распознать</returns>
-		public int Prediction(double[,] inputs)
+		public int Prediction(Bitmap bitmap)
 		{
-			double[] inputSignals = new double[inputs.Length];
+			double[] inputSignals = new double[bitmap.Width * bitmap.Height];
 			var z = 0;
-			for (int x = 0; x < inputs.GetLength(0); x++)
+			for (int x = 0; x < bitmap.Width; x++)
 			{
-				for (int y = 0; y < inputs.GetLength(1); y++)
+				for (int y = 0; y < bitmap.Height; y++)
 				{
-					inputSignals[z] = inputs[x, y];
-					z++;
-				}
-			}
-
-			return Prediction(inputSignals);
-		}
-		
-		/// <summary>
-		/// Метод вычисления результата
-		/// </summary>
-		/// <param name="inputs">Входящие сигналы</param>
-		/// <returns>Цифра, которую удалось распознать</returns>
-		public int Prediction(Bitmap input)
-		{
-			double[] inputSignals = new double[input.Width * input.Height];
-			var z = 0;
-			for (int x = 0; x < input.Width; x++)
-			{
-				for (int y = 0; y < input.Height; y++)
-				{
-					inputSignals[z] = input.GetPixel(x, y).B == 0 ? 1 : 0;
+					inputSignals[z] = bitmap.GetPixel(x, y).B == 0 ? 1 : 0;
 					z++;
 				}
 			}

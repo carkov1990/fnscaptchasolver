@@ -1,8 +1,10 @@
+#if NET462
 using System;
 using System.Drawing;
 using System.IO;
 using PravoRu.Common.CaptchaSolver.Interfaces;
 using PravoRu.Common.CaptchaSolver.Models;
+using PravoRu.Common.CaptchaSolver.Settings;
 using PravoRu.DataLake.AntiCaptcha;
 using Tesseract;
 
@@ -13,13 +15,28 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 	/// </summary>
 	public class TesseractCaptchaSolver: ITesseractCaptchaSolver
 	{
+		private readonly string _tessDataPass;
+		private readonly ICaptchaSettings _captchaSettings;
+		
+		/// <summary>
+		/// .ctor
+		/// </summary>
+		public TesseractCaptchaSolver(ITesseractCaptchaSettings settings, ICaptchaSettings captchaSettings)
+		{
+			_captchaSettings = captchaSettings ?? throw new ArgumentNullException(nameof(captchaSettings));
+			if (settings == null)
+			{
+				throw new ArgumentNullException(nameof(settings));
+			}
+			_tessDataPass = settings?.PathToTessData ?? "tessdata";
+		}
+		
 		/// <summary>
 		/// Решает капчу
 		/// </summary>
 		/// <param name="inputStream">Входящий поток, содержащий картинку с капчей</param>
-		/// <param name="captchaSettings">Настройки капчи</param>
 		/// <returns>Текст решенной капчи</returns>
-		public string SolveCaptcha(Stream inputStream, CaptchaSettings captchaSettings)
+		public string SolveCaptcha(Stream inputStream)
 		{
 			Image img = Image.FromStream(inputStream);
 
@@ -28,7 +45,7 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 			if (bmpImage == null)
 				throw new NotSupportedException("Image is not bitmap");
 
-			return SolveCaptcha(bmpImage, captchaSettings);
+			return SolveCaptcha(bmpImage);
 		}
 
 
@@ -38,12 +55,12 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 		/// <param name="image">Картика с капчей</param>
 		/// <param name="parameters">Настройки капчи</param>
 		/// <returns>Текст решенной капчи</returns>
-		public string SolveCaptcha(Bitmap image, CaptchaSettings parameters)
+		public string SolveCaptcha(Bitmap image)
 		{
-			using (var tessEngine = new TesseractEngine("tessdata", "eng"))
+			using (var tessEngine = new TesseractEngine(_tessDataPass, "eng"))
 			{
-				string whitelist = GetWhiteList(parameters.Flags);
-				string blacklist = GetBlackList(parameters.Flags);
+				string whitelist = GetWhiteList(_captchaSettings.Flags);
+				string blacklist = GetBlackList(_captchaSettings.Flags);
 
 				if (!string.IsNullOrEmpty(whitelist))
 					tessEngine.SetVariable("tessedit_char_whitelist", whitelist);
@@ -90,3 +107,4 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 		}
 	}
 }
+#endif

@@ -75,7 +75,7 @@ namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 			_neurons = new Neuron[neuronCount];
 			for (int i = 0; i < neuronCount; i++)
 			{
-				_neurons[i] = new Neuron(_prevLayer?._neurons.Length ?? 0);
+				_neurons[i] = new Neuron( 0);
 				_neurons[i].Number = i;
 			}
 		}
@@ -85,9 +85,15 @@ namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 		/// </summary>
 		/// <param name="neuronCount">Количество нейронов в слое</param>
 		/// <param name="prevLayer">Предыдущий слой</param>
-		public Layer(int neuronCount, Layer prevLayer) : this(neuronCount)
+		public Layer(int neuronCount, Layer prevLayer)
 		{
 			PrevLayer = prevLayer;
+			_neurons = new Neuron[neuronCount];
+			for (int i = 0; i < neuronCount; i++)
+			{
+				_neurons[i] = new Neuron(_prevLayer?._neurons.Length ?? 0);
+				_neurons[i].Number = i;
+			}
 		}
 
 		/// <summary>

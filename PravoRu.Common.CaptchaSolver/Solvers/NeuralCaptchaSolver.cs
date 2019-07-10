@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using PravoRu.Common.CaptchaSolver.Interfaces;
 using PravoRu.Common.CaptchaSolver.Models;
-using PravoRu.Common.CaptchaSolver.NeuralNetwork;
 
 namespace PravoRu.Common.CaptchaSolver.Solvers
 {
@@ -14,23 +13,24 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 	/// </summary>
 	public class NeuralCaptchaSolver : INeuralCaptchaSolver
 	{
-		private readonly ITopology _topology;
-		private readonly NeuralNetwork.NeuralNetwork _network;
+		private readonly ICaptchaSettings _settings;
+		private INeuralNetwork _network;
 		
 		/// <summary>
 		/// .ctor
 		/// </summary>
-		/// <param name="topology">Топология сети</param>
-		public NeuralCaptchaSolver(ITopology topology)
+		public NeuralCaptchaSolver(INeuralNetwork network, ICaptchaSettings settings)
 		{
-			_topology = topology ?? throw new ArgumentNullException(nameof(topology));
-			_network = new NeuralNetwork.NeuralNetwork(_topology);
-			_network.InitializeFromConfig();
+			_settings = settings?? throw new ArgumentNullException(nameof(settings));
+			_network = network ?? throw new ArgumentNullException(nameof(network));
+			if (!string.IsNullOrWhiteSpace(settings.Topology.PathToConfigFile))
+			{
+				_network.InitializeFromConfig();
+			}
 		}
 
-
 		/// <inheritdoc cref="ICaptchaSolver.SolveCaptcha"/>
-		public string SolveCaptcha(Stream inputStream, CaptchaSettings captchaSettings)
+		public string SolveCaptcha(Stream inputStream)
 		{
 			//Получаем картинки в которых содержатся только цифры
 			var bitmaps = CutCaptcha(Image.FromStream(inputStream) as Bitmap);
@@ -52,6 +52,11 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 			}
 			//Делаем капчу 2х цветной (черный/белый)
 			SetBlackWhiteBitmap(bitmap);
+			
+			//Иногда несколько цифр соединяются одной фигурой из за длинных черт. Удалим их(попробуем)
+			CutLittleLinesX(bitmap,2);
+			CutLittleLinesY(bitmap,2);
+			
 			//Разрезаем капчу на отдельные части, содержащие в себе только цифры и приведенные к стандарту 25x40
 			return GetCuttedBitmaps(bitmap);
 		}
@@ -103,19 +108,45 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 							var resized = GetBitmapsBySquare(cuttedBitmap);
 							foreach (var bitmap1 in resized)
 							{
-								resultBitmaps.Add(Resize(bitmap1));
+								resultBitmaps.Add(bitmap1);
 							}
 						}
 						else
 						{
-							resultBitmaps.Add(Resize(cuttedBitmap));
+							resultBitmaps.Add(cuttedBitmap);
 						}
 					}
-
 					cuttedBitmaps = resultBitmaps;
 				}
 			}
-			return cuttedBitmaps.ToArray();
+
+			//Попробуем просто разделить пополам те картинки, которые шире нужного размера
+			if (cuttedBitmaps.Count < 6)
+			{
+				var resultBitmaps = new List<Bitmap>(6);
+					foreach (var cuttedBitmap in cuttedBitmaps)
+					{
+						//Если ширина картинки боше 35 px, то скорее всего в этой картинке 2 цифры
+						if (cuttedBitmap.Width > 35)
+						{
+							//пробуем разделить картинку
+							var partCount = cuttedBitmap.Width / 35;
+							for (int i = 0; i <= partCount; i++)
+							{
+								var width = cuttedBitmap.Width / (partCount + 1);
+								var part = CropImage(cuttedBitmap,
+									new Rectangle(i*width, 0, width , cuttedBitmap.Height));
+								resultBitmaps.Add(part);
+							}
+						}
+						else
+						{
+							resultBitmaps.Add(cuttedBitmap);
+						}
+					}
+					cuttedBitmaps = resultBitmaps;
+			}
+			return cuttedBitmaps.Select(x=>Resize(x)).ToArray();
 		}
 		
 		//Метод изменения размера изображения
@@ -210,7 +241,7 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 		/// <summary>
 		/// Метод обрезания тонких длинных линий
 		/// </summary>
-		private void CutLittleLinesX(Bitmap digit)
+		private void CutLittleLinesX(Bitmap digit, int pixelCount = 4)
 		{
 			//Попробуем убрать тонкие линии меньше 4х пикселей
 			var checkedPixels = new List<Point>();
@@ -239,7 +270,7 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 							}
 						}
 
-						if (localPixels.Count > 4)
+						if (localPixels.Count > pixelCount)
 						{
 							checkedPixels.AddRange(localPixels);
 						}
@@ -258,7 +289,7 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 		/// <summary>
 		/// Метод обрезания тонких длинных линий
 		/// </summary>
-		private void CutLittleLinesY(Bitmap digit)
+		private void CutLittleLinesY(Bitmap digit, int pixelCount = 4)
 		{
 			//Попробуем убрать тонкие линии меньше 4х пикселей
 			var checkedPixels = new List<Point>();
@@ -288,7 +319,7 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 							}
 						}
 
-						if (localPixels.Count > 4)
+						if (localPixels.Count > pixelCount)
 						{
 							checkedPixels.AddRange(localPixels);
 						}

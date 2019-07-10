@@ -1,3 +1,4 @@
+#if NET462
 using System;
 using System.Drawing;
 using System.IO;
@@ -5,6 +6,7 @@ using Akumu.Antigate;
 using NLog;
 using PravoRu.Common.CaptchaSolver.Interfaces;
 using PravoRu.Common.CaptchaSolver.Models;
+using PravoRu.Common.CaptchaSolver.Settings;
 
 namespace PravoRu.Common.CaptchaSolver.Solvers
 {
@@ -15,13 +17,19 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 	{
 		private readonly string _apiKey;
 		private ILogger _logger = LogManager.GetCurrentClassLogger();
+		private readonly ICaptchaSettings _captchaSettings;
 
 		/// <summary>
 		/// Ctor
 		/// </summary>
 		/// <param name="settings">Настройки доступа к Antigate.com</param>
-		public AntigateCaptchaSolver(AntigateSettings settings)
+		public AntigateCaptchaSolver(IAntigateSettings settings, ICaptchaSettings captchaSettings)
 		{
+			_captchaSettings = captchaSettings ?? throw new ArgumentNullException(nameof(captchaSettings));
+			if (settings == null)
+			{
+				throw new ArgumentNullException(nameof(settings));
+			}
 			_apiKey = settings.AntigateApiKey;
 		}
 		
@@ -37,9 +45,9 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 		/// Решает капчу
 		/// </summary>
 		/// <param name="imageData">Входящий поток, содержащий картинку с капчей</param>
-		/// <param name="captchaSettings">Настройки капчи</param>
+		/// <param name="_captchaSettings">Настройки капчи</param>
 		/// <returns>Текст решенной капчи</returns>
-		public string SolveCaptcha(Stream imageData, CaptchaSettings captchaSettings)
+		public string SolveCaptcha(Stream imageData)
 		{
 			var image = Image.FromStream(imageData);
 
@@ -49,16 +57,16 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 				Akumu.Antigate.AntiCaptcha antiCaptcha = new Akumu.Antigate.AntiCaptcha(_apiKey);
 
 				// минимальная длина текста на капче
-				if (captchaSettings.MinLength.HasValue)
-					antiCaptcha.Parameters.Set("min_len", captchaSettings.MinLength.ToString());
+				if (_captchaSettings.MinLength.HasValue)
+					antiCaptcha.Parameters.Set("min_len", _captchaSettings.MinLength.ToString());
 				// максимальная длина текста на капче
-				if (captchaSettings.MaxLength.HasValue)
-					antiCaptcha.Parameters.Set("max_len", captchaSettings.MaxLength.ToString());
+				if (_captchaSettings.MaxLength.HasValue)
+					antiCaptcha.Parameters.Set("max_len", _captchaSettings.MaxLength.ToString());
 				// не обязательно показывать капчу русскому работнику
-				string needRussianBot = captchaSettings.Flags.HasFlag(CaptchaFlags.HasCyrillicLetters) ? "1" : "0";
+				string needRussianBot = _captchaSettings.Flags.HasFlag(CaptchaFlags.HasCyrillicLetters) ? "1" : "0";
 				antiCaptcha.Parameters.Set("is_russian", needRussianBot);
 				// в капче только цифры
-				if (captchaSettings.Flags == CaptchaFlags.HasDigits)
+				if (_captchaSettings.Flags == CaptchaFlags.HasDigits)
 					antiCaptcha.Parameters.Set("numeric", "1");
 				
 				antiCaptcha.CheckDelay = 1000;
@@ -83,3 +91,4 @@ namespace PravoRu.Common.CaptchaSolver.Solvers
 		}
 	}
 }
+#endif

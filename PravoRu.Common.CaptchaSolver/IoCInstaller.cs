@@ -1,7 +1,9 @@
 ﻿using System;
 using Microsoft.Extensions.DependencyInjection;
 using PravoRu.Common.CaptchaSolver.Interfaces;
+using PravoRu.Common.CaptchaSolver.Models;
 using PravoRu.Common.CaptchaSolver.NeuralNetwork;
+using PravoRu.Common.CaptchaSolver.Settings;
 using PravoRu.Common.CaptchaSolver.Solvers;
 
 namespace PravoRu.Common.CaptchaSolver
@@ -15,13 +17,30 @@ namespace PravoRu.Common.CaptchaSolver
 		/// Метод формирования DI контейнера
 		/// </summary>
 		/// <param name="collection">IServiceCollection</param>
-		/// <param name="topology">Топология нейронной сети</param>
-		public static void UseCaptchaSolver(this IServiceCollection collection, Topology topology)
+		/// <param name="settings">Настройки для распознователей капчи</param>
+		public static IServiceCollection AddCaptchaSolvers(this IServiceCollection collection,
+			ICaptchaSettings settings)
 		{
-			collection.AddSingleton<ITopology>(provider => topology);
-			collection.AddSingleton<IAntigateCaptchaSolver, AntigateCaptchaSolver>();
-			collection.AddSingleton<ITesseractCaptchaSolver, TesseractCaptchaSolver>();
-			collection.AddSingleton<INeuralCaptchaSolver, NeuralCaptchaSolver>();
+			if (settings == null)
+			{
+				throw new ArgumentNullException(nameof(settings));
+			}
+
+			collection.AddSingleton<INeuralNetwork>(provider=>new NeuralNetwork.NeuralNetwork(settings.Topology));
+			collection.AddSingleton<INeuralCaptchaSolver>(provider =>
+			{
+				var network = provider.GetService<INeuralNetwork>();
+				return new NeuralCaptchaSolver(network, settings);
+			});
+
+#if NET462
+			collection.AddSingleton<IAntigateCaptchaSolver>(provider =>
+				new AntigateCaptchaSolver(settings.AntigateSettings, settings));
+			collection.AddSingleton<ITesseractCaptchaSolver>(provider =>
+				new TesseractCaptchaSolver(settings.TesseractCaptchaSettings, settings));
+#endif
+
+			return collection;
 		}
 	}
 }

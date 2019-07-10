@@ -1,4 +1,6 @@
-namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
+using PravoRu.Common.CaptchaSolver.Models;
+
+namespace PravoRu.Common.CaptchaSolver.Settings
 {
 	/// <summary>
 	/// Класс топологии сети

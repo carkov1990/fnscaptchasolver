@@ -1,5 +1,6 @@
 using System.IO;
 using PravoRu.Common.CaptchaSolver.Models;
+using PravoRu.Common.CaptchaSolver.Settings;
 
 namespace PravoRu.Common.CaptchaSolver.Interfaces
 {
@@ -12,8 +13,7 @@ namespace PravoRu.Common.CaptchaSolver.Interfaces
 		/// Метод получения результата распознания капчи
 		/// </summary>
 		/// <param name="inputStream">Источник капчи (как правило, это WebResponse)</param>
-		/// <param name="captchaSettings">Настройки капчи</param>
 		/// <returns></returns>
-		string SolveCaptcha(Stream inputStream, CaptchaSettings captchaSettings);
+		string SolveCaptcha(Stream inputStream);
 	}
 }

@@ -1,4 +1,4 @@
-namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
+namespace PravoRu.Common.CaptchaSolver.Models
 {
 	/// <summary>
 	/// Интерфейс топологии сети

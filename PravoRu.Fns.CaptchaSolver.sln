@@ -8,6 +8,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PravoRu.Fns.CaptchaSolver.N
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PravoRu.Common.CaptchaSolver", "PravoRu.Common.CaptchaSolver\PravoRu.Common.CaptchaSolver.csproj", "{A2627613-5F1A-4789-AC7D-DCC6D76EAF6E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PravoRu.Common.CaptchaSolver.IntegrationTests", "PravoRu.Common.CaptchaSolver.IntegrationTests\PravoRu.Common.CaptchaSolver.IntegrationTests.csproj", "{7EC64E08-9AF2-451F-A05E-A5928961EAF4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PravoRu.Common.CaptchaSolver.Core.IntegrationTests", "PravoRu.Common.CaptchaSolver.Core.IntegrationTests\PravoRu.Common.CaptchaSolver.Core.IntegrationTests.csproj", "{246B796A-20B7-4213-81ED-45058A33C218}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +34,13 @@ Global
 		{A2627613-5F1A-4789-AC7D-DCC6D76EAF6E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A2627613-5F1A-4789-AC7D-DCC6D76EAF6E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A2627613-5F1A-4789-AC7D-DCC6D76EAF6E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EC64E08-9AF2-451F-A05E-A5928961EAF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EC64E08-9AF2-451F-A05E-A5928961EAF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EC64E08-9AF2-451F-A05E-A5928961EAF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EC64E08-9AF2-451F-A05E-A5928961EAF4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{246B796A-20B7-4213-81ED-45058A33C218}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{246B796A-20B7-4213-81ED-45058A33C218}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{246B796A-20B7-4213-81ED-45058A33C218}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{246B796A-20B7-4213-81ED-45058A33C218}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

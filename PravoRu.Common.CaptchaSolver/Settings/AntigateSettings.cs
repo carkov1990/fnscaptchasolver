@@ -1,11 +1,12 @@
-﻿using PravoRu.Common.ServiceDiscovery.Configuration;
+﻿using PravoRu.Common.CaptchaSolver.Interfaces;
+using PravoRu.Common.ServiceDiscovery.Configuration;
 
 namespace PravoRu.Common.CaptchaSolver.Models
 {
 	/// <summary>
 	/// Настройки доступа к Antigate.com
 	/// </summary>
-	public class AntigateSettings : ConsuledSettings
+	public class AntigateSettings : ConsuledSettings, IAntigateSettings
 	{
 		/// <summary>
 		/// 32-символьный токен для сайта antigate.com

@@ -63,10 +63,10 @@ namespace PravoRu.Common.CaptchaSolver.NeuralNetwork
 		/// .ctor
 		/// </summary>
 		/// <param name="countWeights">Количество весов/сигналов на предыдущем слое</param>
-		/// <exception cref="ArgumentException">Вызывается если кол-во сигналов меньше 1</exception>
+		/// <exception cref="ArgumentException">Вызывается если кол-во сигналов меньше 0</exception>
 		public Neuron(int countWeights) : this()
 		{
-			if (countWeights <= 0)
+			if (countWeights < 0)
 			{
 				throw new ArgumentException(nameof(countWeights));
 			}
